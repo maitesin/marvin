@@ -1,10 +1,7 @@
 package tracking
 
-type Event struct {
-	Timestamp   string
-	Information string
-}
+import "github.com/maitesin/marvin/internal/domain"
 
 type Tracker interface {
-	Track(id string) ([]Event, error)
+	Track(id string) ([]domain.DeliveryEvent, error)
 }

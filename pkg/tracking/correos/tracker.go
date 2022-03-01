@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/maitesin/marvin/pkg/tracking"
+	"github.com/maitesin/marvin/internal/domain"
 )
 
 const urlRegex = "https://api1.correos.es/digital-services/searchengines/api/v1/?text=%s&language=ES&searchType=envio"
@@ -25,7 +25,7 @@ func NewTracker(client *http.Client) (*Tracker, error) {
 	}, nil
 }
 
-func (t *Tracker) Track(id string) ([]tracking.Event, error) {
+func (t *Tracker) Track(id string) ([]domain.DeliveryEvent, error) {
 	resp, err := t.client.Get(fmt.Sprintf(urlRegex, id))
 	if err != nil {
 		return nil, err
@@ -47,9 +47,9 @@ func (t *Tracker) Track(id string) ([]tracking.Event, error) {
 		return nil, fmt.Errorf("expected information from a single shipment, found %d", len(body.Shipments))
 	}
 
-	events := make([]tracking.Event, len(body.Shipments[0].Events))
+	events := make([]domain.DeliveryEvent, len(body.Shipments[0].Events))
 	for i, event := range body.Shipments[0].Events {
-		events[i] = tracking.Event{
+		events[i] = domain.DeliveryEvent{
 			Timestamp:   fmt.Sprintf("%s %s", event.Date, event.Time),
 			Information: fmt.Sprintf("%s (%s)", event.SummaryText, event.ExtendedText),
 		}

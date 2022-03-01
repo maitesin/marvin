@@ -1,15 +1,39 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
+	_ "github.com/lib/pq"
+	"github.com/maitesin/marvin/config"
+	sqlx "github.com/maitesin/marvin/internal/infra/sql"
 	"github.com/maitesin/marvin/pkg/tracking/correos"
 	"github.com/maitesin/marvin/pkg/tracking/dhl"
+	"github.com/upper/db/v4/adapter/postgresql"
 )
 
 func main() {
-	_, err := correos.NewTracker(http.DefaultClient)
+	cfg := config.NewConfig()
+
+	dbConn, err := sql.Open("postgres", cfg.SQL.DatabaseURL())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer dbConn.Close()
+
+	pgConn, err := postgresql.New(dbConn)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer pgConn.Close()
+
+	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
+	_ = deliveriesRepository
+
+	_, err = correos.NewTracker(http.DefaultClient)
 	if err != nil {
 		panic(err)
 	}

@@ -6,12 +6,12 @@ import (
 	"github.com/maitesin/marvin/internal/infra/sql"
 )
 
-// Config defines the configuration of the mtga application
+// Config defines the configuration of the marvin application
 type Config struct {
 	SQL sql.Config
 }
 
-// NewConfig is the constructor for the mtga application configuration
+// NewConfig is the constructor for the marvin application configuration
 func NewConfig() Config {
 	return Config{
 		SQL: sql.Config{

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/maitesin/marvin/pkg/tracking"
+	"github.com/maitesin/marvin/internal/domain"
 )
 
 const urlRegex = "https://clientesparcel.dhl.es/LiveTracking/api/expediciones?numeroExpedicion=%s"
@@ -24,7 +24,7 @@ func NewTracker(client *http.Client) (*Tracker, error) {
 	}, nil
 }
 
-func (t *Tracker) Track(id string) ([]tracking.Event, error) {
+func (t *Tracker) Track(id string) ([]domain.DeliveryEvent, error) {
 	resp, err := t.client.Get(fmt.Sprintf(urlRegex, id))
 	if err != nil {
 		return nil, err
@@ -42,9 +42,9 @@ func (t *Tracker) Track(id string) ([]tracking.Event, error) {
 		return nil, err
 	}
 
-	events := make([]tracking.Event, len(body.Shipments))
+	events := make([]domain.DeliveryEvent, len(body.Shipments))
 	for i, event := range body.Shipments {
-		events[i] = tracking.Event{
+		events[i] = domain.DeliveryEvent{
 			Timestamp:   fmt.Sprintf("%s %s", strings.TrimSpace(event.Date), strings.TrimSpace(event.Time)),
 			Information: fmt.Sprintf("%s %s", strings.TrimSpace(event.Text), strings.TrimSpace(event.City)),
 		}
