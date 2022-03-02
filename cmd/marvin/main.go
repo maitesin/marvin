@@ -2,11 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"net/http"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	_ "github.com/lib/pq"
 	"github.com/maitesin/marvin/config"
 	sqlx "github.com/maitesin/marvin/internal/infra/sql"
@@ -15,9 +18,30 @@ import (
 	"github.com/upper/db/v4/adapter/postgresql"
 )
 
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
+
+func init() {
+	source.Register("embed", &driver{})
+}
+
+type driver struct {
+	httpfs.PartialDriver
+}
+
+func (d *driver) Open(path string) (source.Driver, error) {
+	err := d.PartialDriver.Init(http.FS(migrationsFS), path[len("embed://"):])
+	if err != nil {
+		return nil, err
+	}
+
+	return d, nil
+}
+
 func main() {
 	cfg := config.NewConfig()
 
+	fmt.Println("Opening connection")
 	dbConn, err := sql.Open("postgres", cfg.SQL.DatabaseURL())
 	if err != nil {
 		fmt.Println(err)
@@ -25,6 +49,7 @@ func main() {
 	}
 	defer dbConn.Close()
 
+	fmt.Println("PG connection")
 	pgConn, err := postgresql.New(dbConn)
 	if err != nil {
 		fmt.Println(err)
@@ -32,24 +57,28 @@ func main() {
 	}
 	defer pgConn.Close()
 
+	fmt.Println("PG Driver")
 	dbDriver, err := postgres.WithInstance(dbConn, &postgres.Config{})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	migrations, err := migrate.NewWithDatabaseInstance("file://../../devops/db/migrations", "marvin", dbDriver)
+	fmt.Println("Setup DB migrations")
+	migrations, err := migrate.NewWithDatabaseInstance("embed://migrations", "marvin", dbDriver)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
+	fmt.Println("Run DB migrations")
 	err = migrations.Up()
-	if err != nil {
+	if err != nil && err.Error() != "no change" {
 		fmt.Println(err)
 		return
 	}
 
+	fmt.Println("Done")
 	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
 	_ = deliveriesRepository
 
