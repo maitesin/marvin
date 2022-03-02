@@ -1,1 +1,1 @@
-DROP TABLE deliveries;
+DROP TABLE IF EXISTS deliveries;
