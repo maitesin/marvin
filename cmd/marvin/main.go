@@ -8,11 +8,10 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source"
-	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	_ "github.com/lib/pq"
 	"github.com/maitesin/marvin/config"
 	sqlx "github.com/maitesin/marvin/internal/infra/sql"
+	"github.com/maitesin/marvin/internal/infra/sql/migrations"
 	"github.com/maitesin/marvin/pkg/tracking/correos"
 	"github.com/maitesin/marvin/pkg/tracking/dhl"
 	"github.com/upper/db/v4/adapter/postgresql"
@@ -20,23 +19,6 @@ import (
 
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
-
-func init() {
-	source.Register("embed", &driver{})
-}
-
-type driver struct {
-	httpfs.PartialDriver
-}
-
-func (d *driver) Open(path string) (source.Driver, error) {
-	err := d.PartialDriver.Init(http.FS(migrationsFS), path[len("embed://"):])
-	if err != nil {
-		return nil, err
-	}
-
-	return d, nil
-}
 
 func main() {
 	cfg := config.NewConfig()
@@ -61,6 +43,7 @@ func main() {
 		return
 	}
 
+	migrations.RegisterMigrationDriver(migrationsFS)
 	migrations, err := migrate.NewWithDatabaseInstance("embed://migrations", "marvin", dbDriver)
 	if err != nil {
 		fmt.Println(err)
