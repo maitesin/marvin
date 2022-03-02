@@ -41,7 +41,6 @@ func (d *driver) Open(path string) (source.Driver, error) {
 func main() {
 	cfg := config.NewConfig()
 
-	fmt.Println("Opening connection")
 	dbConn, err := sql.Open("postgres", cfg.SQL.DatabaseURL())
 	if err != nil {
 		fmt.Println(err)
@@ -49,7 +48,6 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	fmt.Println("PG connection")
 	pgConn, err := postgresql.New(dbConn)
 	if err != nil {
 		fmt.Println(err)
@@ -57,28 +55,24 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	fmt.Println("PG Driver")
 	dbDriver, err := postgres.WithInstance(dbConn, &postgres.Config{})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Setup DB migrations")
 	migrations, err := migrate.NewWithDatabaseInstance("embed://migrations", "marvin", dbDriver)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Run DB migrations")
 	err = migrations.Up()
 	if err != nil && err.Error() != "no change" {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Done")
 	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
 	_ = deliveriesRepository
 
