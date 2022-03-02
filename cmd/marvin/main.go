@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"net/http"
 
+	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/lib/pq"
 	"github.com/maitesin/marvin/config"
 	sqlx "github.com/maitesin/marvin/internal/infra/sql"
@@ -29,6 +31,24 @@ func main() {
 		return
 	}
 	defer pgConn.Close()
+
+	dbDriver, err := postgres.WithInstance(dbConn, &postgres.Config{})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	migrations, err := migrate.NewWithDatabaseInstance("file://../../devops/db/migrations", "marvin", dbDriver)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = migrations.Up()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
 	_ = deliveriesRepository
