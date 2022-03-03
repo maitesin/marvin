@@ -117,6 +117,10 @@ func main() {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, builder.String())
 		msg.ReplyToMessageID = update.Message.MessageID
 
-		bot.Send(msg)
+		_, err = bot.Send(msg)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 }
