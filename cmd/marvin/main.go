@@ -43,6 +43,16 @@ func main() {
 		return
 	}
 
+	dirEntries, err := migrationsFS.ReadDir(".")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, dirEntry := range dirEntries {
+		fmt.Printf("Files: %s\n", dirEntry.Name())
+	}
+
 	migrations.RegisterMigrationDriver(migrationsFS)
 	migrations, err := migrate.NewWithDatabaseInstance("embed://migrations", "marvin", dbDriver)
 	if err != nil {
