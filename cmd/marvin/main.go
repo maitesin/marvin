@@ -82,7 +82,7 @@ func main() {
 	//	fmt.Printf("%s\n%s\n\n", event.Timestamp, event.Information)
 	//}
 
-	bot, err := tgbotapi.NewBotAPI("")
+	bot, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		fmt.Println(err)
 		return
