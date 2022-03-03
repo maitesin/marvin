@@ -15,9 +15,9 @@ type Config struct {
 func NewConfig() Config {
 	return Config{
 		SQL: sql.Config{
-			URL:          GetEnvOrDefault("DB_URL", "postgres://postgres:postgres@localhost:54321/marvin"),
-			SSLMode:      GetEnvOrDefault("DB_SSL_MODE", "disable"),
-			BinaryParams: GetEnvOrDefault("DB_BINARY_PARAMETERS", "yes"),
+			URL:          GetEnvOrDefault("DATABASE_URL", "postgres://postgres:postgres@localhost:54321/marvin"),
+			SSLMode:      GetEnvOrDefault("DATABASE_SSL_MODE", "disable"),
+			BinaryParams: GetEnvOrDefault("DATABASE_BINARY_PARAMETERS", "yes"),
 		},
 	}
 }
