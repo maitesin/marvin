@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/maitesin/marvin/internal/infra/http"
 	"github.com/maitesin/marvin/internal/infra/telegram"
 	"os"
 
@@ -10,6 +11,7 @@ import (
 // Config defines the configuration of the marvin application
 type Config struct {
 	SQL      sql.Config
+	HTTP     http.Config
 	Telegram telegram.Config
 }
 
@@ -20,6 +22,10 @@ func NewConfig() Config {
 			URL:          GetEnvOrDefault("DATABASE_URL", "postgres://postgres:postgres@localhost:54321/marvin"),
 			SSLMode:      GetEnvOrDefault("DATABASE_SSL_MODE", "disable"),
 			BinaryParams: GetEnvOrDefault("DATABASE_BINARY_PARAMETERS", "yes"),
+		},
+		HTTP: http.Config{
+			Host: GetEnvOrDefault("HOST", "0.0.0.0"),
+			Port: GetEnvOrDefault("PORT", "80"),
 		},
 		Telegram: telegram.Config{
 			Token: GetEnvOrDefault("TELEGRAM_TOKEN", ""),

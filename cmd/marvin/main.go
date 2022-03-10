@@ -13,6 +13,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/lib/pq"
 	"github.com/maitesin/marvin/config"
+	httpx "github.com/maitesin/marvin/internal/infra/http"
 	sqlx "github.com/maitesin/marvin/internal/infra/sql"
 	"github.com/maitesin/marvin/internal/infra/sql/migrations"
 	"github.com/maitesin/marvin/pkg/tracking/correos"
@@ -61,6 +62,16 @@ func main() {
 
 	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
 	_ = deliveriesRepository
+
+	go func() {
+		err = http.ListenAndServe(
+			strings.Join([]string{cfg.HTTP.Host, cfg.HTTP.Port}, ":"),
+			httpx.DefaultRouter(),
+		)
+		if err != nil {
+			fmt.Printf("Failed to start service: %s\n", err.Error())
+		}
+	}()
 
 	correosTracker, err := correos.NewTracker(http.DefaultClient)
 	if err != nil {
