@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"github.com/maitesin/marvin/internal/infra/telegram"
 	"log"
 	"net/http"
 	"strings"
@@ -93,22 +94,13 @@ func main() {
 	//	fmt.Printf("%s\n%s\n\n", event.Timestamp, event.Information)
 	//}
 
-	bot, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
+	bot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	bot.Debug = true
-
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	updates := bot.GetUpdatesChan(u)
-
-	for update := range updates {
+	for update := range bot.GetUpdatesChannel() {
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
 		}
