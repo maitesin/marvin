@@ -34,7 +34,7 @@ func NewConfig() Config {
 		},
 		NewRelic: newrelic.Config{
 			Name:    GetEnvOrDefault("NEW_RELIC_NAME", "Marvin"),
-			License: GetEnvOrDefault("NEW_RELIC_LICENSE", ""),
+			License: GetEnvOrDefault("NEW_RELIC_LICENSE_KEY", ""),
 		},
 	}
 }
