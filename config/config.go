@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/maitesin/marvin/internal/infra/http"
+	"github.com/maitesin/marvin/internal/infra/newrelic"
 	"github.com/maitesin/marvin/internal/infra/telegram"
 	"os"
 
@@ -13,6 +14,7 @@ type Config struct {
 	SQL      sql.Config
 	HTTP     http.Config
 	Telegram telegram.Config
+	NewRelic newrelic.Config
 }
 
 // NewConfig is the constructor for the marvin application configuration
@@ -29,6 +31,10 @@ func NewConfig() Config {
 		},
 		Telegram: telegram.Config{
 			Token: GetEnvOrDefault("TELEGRAM_TOKEN", ""),
+		},
+		NewRelic: newrelic.Config{
+			Name:    GetEnvOrDefault("NEW_RELIC_NAME", "Marvin"),
+			License: GetEnvOrDefault("NEW_RELIC_LICENSE", ""),
 		},
 	}
 }

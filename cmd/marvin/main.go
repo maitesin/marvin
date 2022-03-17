@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"github.com/maitesin/marvin/internal/infra/telegram"
 	"log"
 	"net/http"
 	"strings"
@@ -17,8 +16,10 @@ import (
 	httpx "github.com/maitesin/marvin/internal/infra/http"
 	sqlx "github.com/maitesin/marvin/internal/infra/sql"
 	"github.com/maitesin/marvin/internal/infra/sql/migrations"
+	"github.com/maitesin/marvin/internal/infra/telegram"
 	"github.com/maitesin/marvin/pkg/tracking/correos"
 	"github.com/maitesin/marvin/pkg/tracking/dhl"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/upper/db/v4/adapter/postgresql"
 )
 
@@ -64,10 +65,20 @@ func main() {
 	deliveriesRepository := sqlx.NewDeliveriesRepository(pgConn)
 	_ = deliveriesRepository
 
+	app, err := newrelic.NewApplication(
+		newrelic.ConfigAppName(cfg.NewRelic.Name),
+		newrelic.ConfigLicense(cfg.NewRelic.License),
+		newrelic.ConfigDistributedTracerEnabled(true),
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	go func() {
 		err = http.ListenAndServe(
 			strings.Join([]string{cfg.HTTP.Host, cfg.HTTP.Port}, ":"),
-			httpx.DefaultRouter(),
+			httpx.DefaultRouter(app),
 		)
 		if err != nil {
 			fmt.Printf("Failed to start service: %s\n", err.Error())
