@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
+	"github.com/maitesin/marvin/internal/infra/pinger"
 	"github.com/maitesin/marvin/internal/infra/telegram"
 	"log"
 	"net/http"
@@ -27,6 +29,7 @@ var migrationsFS embed.FS
 
 func main() {
 	cfg := config.NewConfig()
+	ctx := context.Background()
 
 	dbConn, err := sql.Open("postgres", cfg.SQL.DatabaseURL())
 	if err != nil {
@@ -72,6 +75,10 @@ func main() {
 		if err != nil {
 			fmt.Printf("Failed to start service: %s\n", err.Error())
 		}
+	}()
+
+	go func() {
+		pinger.NewPinger(cfg.Pinger.Address, cfg.Pinger.Frequency).Start(ctx)
 	}()
 
 	correosTracker, err := correos.NewTracker(http.DefaultClient)
