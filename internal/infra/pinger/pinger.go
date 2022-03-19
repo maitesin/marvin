@@ -2,6 +2,7 @@ package pinger
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -32,5 +33,8 @@ func (p Pinger) Start(ctx context.Context) {
 }
 
 func (p Pinger) ping() {
-	http.Get(p.address)
+	_, err := http.Get(p.address)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
