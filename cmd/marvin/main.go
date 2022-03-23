@@ -5,11 +5,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"log"
-	"net/http"
-	"strings"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/lib/pq"
@@ -22,6 +17,8 @@ import (
 	"github.com/maitesin/marvin/pkg/tracking/correos"
 	"github.com/maitesin/marvin/pkg/tracking/dhl"
 	"github.com/upper/db/v4/adapter/postgresql"
+	"net/http"
+	"strings"
 )
 
 //go:embed migrations/*.sql
@@ -68,16 +65,6 @@ func main() {
 	_ = deliveriesRepository
 
 	go func() {
-		err = http.ListenAndServe(
-			strings.Join([]string{cfg.HTTP.Host, cfg.HTTP.Port}, ":"),
-			httpx.DefaultRouter(),
-		)
-		if err != nil {
-			fmt.Printf("Failed to start service: %s\n", err.Error())
-		}
-	}()
-
-	go func() {
 		pinger.NewPinger(cfg.Pinger.Address, cfg.Pinger.Frequency).Start(ctx)
 	}()
 
@@ -92,45 +79,25 @@ func main() {
 	}
 	_ = dhlTracker
 
-	//events, err := dhlTracker.Track("CO902088319DE")
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	//for _, event := range events {
-	//	fmt.Printf("%s\n%s\n\n", event.Timestamp, event.Information)
-	//}
-
 	bot, err := telegram.NewBot(cfg.Telegram)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	for update := range bot.GetUpdatesChannel() {
-		if update.Message == nil { // ignore any non-Message Updates
-			continue
-		}
-
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		builder := strings.Builder{}
-		events, err := correosTracker.Track(update.Message.Text)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, event := range events {
-			builder.WriteString(fmt.Sprintf("%s\n%s\n\n", event.Timestamp, event.Information))
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, builder.String())
-		msg.ReplyToMessageID = update.Message.MessageID
-
-		_, err = bot.Send(msg)
+	go func() {
+		err = bot.Listen(correosTracker)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+	}()
+
+	err = http.ListenAndServe(
+		strings.Join([]string{cfg.HTTP.Host, cfg.HTTP.Port}, ":"),
+		httpx.DefaultRouter(),
+	)
+	if err != nil {
+		fmt.Printf("Failed to start service: %s\n", err.Error())
 	}
 }
