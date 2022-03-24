@@ -1,18 +1,24 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/maitesin/marvin/pkg/tracking"
 	"log"
 	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/maitesin/marvin/internal/domain"
+	"github.com/maitesin/marvin/internal/infra/sql"
+	"github.com/maitesin/marvin/pkg/tracking"
 )
 
 type Bot struct {
-	private *tgbotapi.BotAPI
+	ctx        context.Context
+	private    *tgbotapi.BotAPI
+	deliveries *sql.DeliveriesRepository
 }
 
-func NewBot(cfg Config) (Bot, error) {
+func NewBot(ctx context.Context, cfg Config, deliveries *sql.DeliveriesRepository) (Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(cfg.Token)
 	if err != nil {
 		fmt.Println(err)
@@ -21,7 +27,11 @@ func NewBot(cfg Config) (Bot, error) {
 
 	bot.Debug = true
 
-	return Bot{private: bot}, nil
+	return Bot{
+		ctx:        ctx,
+		private:    bot,
+		deliveries: deliveries,
+	}, nil
 }
 
 func (b *Bot) GetUpdatesChannel() tgbotapi.UpdatesChannel {
@@ -55,7 +65,13 @@ func (b *Bot) Listen(tracker tracking.Tracker) error {
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, builder.String())
-		msg.ReplyToMessageID = update.Message.MessageID
+		//msg.ReplyToMessageID = update.Message.MessageID
+
+		err = b.deliveries.Insert(b.ctx, domain.NewDelivery(update.Message.Text, events))
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 
 		_, err = b.Send(msg)
 		if err != nil {

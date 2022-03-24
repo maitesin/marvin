@@ -79,7 +79,7 @@ func main() {
 	}
 	_ = dhlTracker
 
-	bot, err := telegram.NewBot(cfg.Telegram)
+	bot, err := telegram.NewBot(ctx, cfg.Telegram, deliveriesRepository)
 	if err != nil {
 		fmt.Println(err)
 		return
