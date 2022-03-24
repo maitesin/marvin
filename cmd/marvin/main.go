@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/lib/pq"
@@ -17,8 +20,6 @@ import (
 	"github.com/maitesin/marvin/pkg/tracking/correos"
 	"github.com/maitesin/marvin/pkg/tracking/dhl"
 	"github.com/upper/db/v4/adapter/postgresql"
-	"net/http"
-	"strings"
 )
 
 //go:embed migrations/*.sql
