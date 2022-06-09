@@ -1,6 +1,6 @@
 # marvin
 
-Marvin is a digital assistant
+Marvin is a digital assistant (currently just works as a telegram bot)
 
 ## Getting started
 
